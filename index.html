@@ -285,10 +285,10 @@ function pasteRoster(side){
  if(teamName)state.info[side+'Name']=teamName;
  save();renderSetup();
 }
-function updatePlayer(side,id,key,value){const p=getPlayer(side,id);if(p){p[key]=value;save();renderStarters(side)}}function removePlayer(side,id){if(state.events.some(e=>e.playerId===id)||state.onCourt[side].includes(id)){alert('出場・記録のある選手は削除できません。');return}state.teams[side]=state.teams[side].filter(p=>p.id!==id);save();renderSetup()}function toggleStarter(side,id,checked){const arr=state.onCourt[side];if(state.started){alert('試合開始後の出場変更は、試合記録画面の「交代」を使用してください。');renderStarters(side);return}if(checked&&arr.length>=5){alert('スターティングは5人までです。');renderStarters(side);return}state.onCourt[side]=sortByNumber(side,checked?[...arr,id]:arr.filter(x=>x!==id));save();renderStarters(side)}function renderStarters(side){const el=$('starter'+(side==='home'?'Home':'Away'));if(!el)return;el.innerHTML=state.teams[side].map(p=>`<label><input type="checkbox" ${state.onCourt[side].includes(p.id)?'checked':''} onchange="toggleStarter('${side}','${p.id}',this.checked)">#${escapeHTML(p.number||'?')} ${escapeHTML(p.name||'未入力')}</label>`).join('')||'<p class="small">選手を登録してください。</p>';const count=$('starterCount'+(side==='home'?'Home':'Away'));if(count)count.textContent='選択中：'+state.onCourt[side].length+' / 5人（背番号の昇順で縦表示）'}function renderSetup(){fillInputs();for(const side of sides){const upper=side==='home'?'Home':'Away';$('roster'+upper).innerHTML=state.teams[side].map(p=>`<div class="roster-row"><input aria-label="背番号" placeholder="番号" value="${escapeHTML(p.number)}" onchange="updatePlayer('${side}','${p.id}','number',this.value)"><input aria-label="選手名" placeholder="名前（空欄可）" value="${escapeHTML(p.name)}" onchange="updatePlayer('${side}','${p.id}','name',this.value)"><button onclick="removePlayer('${side}','${p.id}')">削除</button></div>`).join('');renderStarters(side)}}
+function updatePlayer(side,id,key,value){const p=getPlayer(side,id);if(p){p[key]=value;save();renderStarters(side)}}function removePlayer(side,id){if(state.events.some(e=>e.playerId===id)||state.onCourt[side].includes(id)){alert('出場・記録のある選手は削除できません。');return}state.teams[side]=state.teams[side].filter(p=>p.id!==id);save();renderSetup()}function toggleStarter(side,id,checked){const arr=state.onCourt[side];if(state.started){alert('試合開始後の出場変更は、試合記録画面の「選手変更」を使用してください。');renderStarters(side);return}if(checked&&arr.length>=5){alert('スターティングは5人までです。');renderStarters(side);return}state.onCourt[side]=sortByNumber(side,checked?[...arr,id]:arr.filter(x=>x!==id));save();renderStarters(side)}function renderStarters(side){const el=$('starter'+(side==='home'?'Home':'Away'));if(!el)return;el.innerHTML=state.teams[side].map(p=>`<label><input type="checkbox" ${state.onCourt[side].includes(p.id)?'checked':''} onchange="toggleStarter('${side}','${p.id}',this.checked)">#${escapeHTML(p.number||'?')} ${escapeHTML(p.name||'未入力')}</label>`).join('')||'<p class="small">選手を登録してください。</p>';const count=$('starterCount'+(side==='home'?'Home':'Away'));if(count)count.textContent='選択中：'+state.onCourt[side].length+' / 5人（背番号の昇順で縦表示）'}function renderSetup(){fillInputs();for(const side of sides){const upper=side==='home'?'Home':'Away';$('roster'+upper).innerHTML=state.teams[side].map(p=>`<div class="roster-row"><input aria-label="背番号" placeholder="番号" value="${escapeHTML(p.number)}" onchange="updatePlayer('${side}','${p.id}','number',this.value)"><input aria-label="選手名" placeholder="名前（空欄可）" value="${escapeHTML(p.name)}" onchange="updatePlayer('${side}','${p.id}','name',this.value)"><button onclick="removePlayer('${side}','${p.id}')">削除</button></div>`).join('');renderStarters(side)}}
 function sortByNumber(side,ids){return [...ids].sort((a,b)=>{const x=getPlayer(side,a)?.number||'',y=getPlayer(side,b)?.number||'';return x.localeCompare(y,'ja',{numeric:true,sensitivity:'base'})})}
 function chooseFive(side){
- if(state.started){alert('試合開始後の出場選手変更は「交代」を使用してください。');return;}
+ if(state.started){alert('試合開始後の出場選手変更は「選手変更」を使用してください。');return;}
  const root=$('fivePicker');const upper=side==='home'?'HOME':'AWAY';
  root.className='five-picker-overlay';
  root.innerHTML=`<div class="five-picker-box"><h2>${upper} 出場選手5人を選択</h2><p class="small">5人をタップしてください。確定すると背番号の小さい順に縦に並びます。</p><div id="pickerCount" class="status"></div><div class="picker-options">${state.teams[side].map(p=>`<button type="button" data-pick="${p.id}" onclick="pickFive('${side}','${p.id}')">#${escapeHTML(p.number||'?')} ${escapeHTML(p.name||'名前未入力')}</button>`).join('')}</div><div class="actions"><button type="button" onclick="closeFivePicker()">閉じる</button><button type="button" class="primary" onclick="confirmFive('${side}')">この5人で確定</button></div></div>`;
@@ -344,7 +344,7 @@ function renderHistory(){
  const visible=historyExpanded?all:all.slice(0,2);const toggle=$('historyExpandBtn');if(toggle){toggle.textContent=historyExpanded?'直近2件に戻す':'すべて表示（'+all.length+'件）';toggle.style.display=all.length>2?'inline-block':'none'}
  el.innerHTML=visible.map(e=>{
   const p=e.playerId?getPlayer(e.side,e.playerId):null;
-  const label=e.code==='SUBSTITUTION'?'交代 OUT '+e.out.map(id=>'#'+(getPlayer(e.side,id)?.number||'?')).join('・')+' → IN '+e.ins.map(id=>'#'+(getPlayer(e.side,id)?.number||'?')).join('・'):
+  const label=e.code==='SUBSTITUTION'?'選手変更 OUT '+e.out.map(id=>'#'+(getPlayer(e.side,id)?.number||'?')).join('・')+' → IN '+e.ins.map(id=>'#'+(getPlayer(e.side,id)?.number||'?')).join('・'):
    e.code==='TEAM_TIMEOUT'?'タイムアウト':('#'+(p?.number||'?')+' '+(p?.name||'名前未入力')+' / '+(e.code==='FTM'?'FT成功':e.code==='FTA'?'FT失敗':commands.find(c=>c[0]===e.code)?.[1]||e.code));
   return `<div class="logitem"><span class="history-text">${escapeHTML(e.period)} / ${escapeHTML((state.info[e.side+'Name']||e.side.toUpperCase()))} / ${escapeHTML(label)} <small>${escapeHTML(new Date(e.time).toLocaleTimeString('ja-JP'))}</small></span><span class="history-actions">${e.code==='SUBSTITUTION'?'':`<button onclick="editHistoryEvent('${e.id}')">訂正</button>`}<button onclick="removeHistoryItem('${e.id}')">取消</button></span></div>`;
  }).join('')||'<p class="small">この期間の記録はありません。</p>';
@@ -368,7 +368,7 @@ function removeHistoryItem(id){
  if(id.startsWith('sub:')){
   const sub=(state.substitutions||[]).find(x=>x.id===id.slice(4));
   if(!sub)return;
-  if(!confirm('交代履歴を削除しますか？ 現在の出場5人は変更されません。'))return;
+  if(!confirm('選手変更履歴を削除しますか？ 現在の出場5人は変更されません。'))return;
   state.substitutions=state.substitutions.filter(x=>x.id!==sub.id);
  }else{
   state.events=state.events.filter(e=>e.id!==id);
@@ -404,7 +404,7 @@ function calculateScores(){const s={home:0,away:0};for(const e of state.events)s
  recordEvent(side,id,selectedCommand);selectedCommand=null;renderRecord();
 }
 function tapCommand(code){
- if(swapSide){alert('交代操作を完了するか、選択解除してください。');return}
+ if(swapSide){alert('選手変更を完了するか、選択解除してください。');return}
  selectedPlayer=null;selectedCommand=selectedCommand===code?null:code;renderRecord();
 }
 function openFT(side,id){
